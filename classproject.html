@@ -77,10 +77,10 @@ img {
 <p>We then take a closer look at the columns. The first several are for record keeping only and are not predictive, they identify the subjects or the time in which the measurements were taken. We will not use those for our model. We also notice that there are several columns that are aggregated measurements (e.g., maximums, minimums, averages). Just from a logic level, it doesn’t make sense to include those in the model and looking at them more carefully, they’re mostly missing values. We can quickly look and check to see how much is missing.</p>
 <pre class="r"><code>missingData &lt;- apply(is.na(projectData),2,sum)
 sample(missingData,5)</code></pre>
-<pre><code>##  kurtosis_roll_forearm     var_accel_dumbbell           var_roll_arm 
-##                  19300                  19216                  19216 
-## amplitude_yaw_dumbbell   var_total_accel_belt 
-##                  19221                  19216</code></pre>
+<pre><code>## min_yaw_dumbbell magnet_forearm_x    avg_roll_belt      accel_arm_y 
+##            19221                0            19216                0 
+##   min_pitch_belt 
+##            19216</code></pre>
 <p>We’re going to remove the columns with extensive missing data as well.</p>
 <pre class="r"><code>missingData &lt;- !as.logical(missingData)
 projectData &lt;- projectData[,missingData]
@@ -158,7 +158,7 @@ confM</code></pre>
 ## Detection Rate          0.284    0.190    0.171    0.163    0.182
 ## Detection Prevalence    0.286    0.194    0.174    0.164    0.182
 ## Balanced Accuracy       0.997    0.989    0.989    0.995    0.995</code></pre>
-<p>As we have 99% accuracy with high sensitivity and specificity, and an out of sample rate of 0.0104 we’re going to move forward with this model.</p>
+<p>As we have 99% accuracy with high sensitivity and specificity, and an out of sample rate of <code>0.0104</code> we’re going to move forward with this model.</p>
 </div>
 <div id="testing" class="section level2">
 <h2>Testing</h2>
@@ -174,7 +174,7 @@ answers</code></pre>
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
-<p>We now have a model that can, given just a few data points, fairly accurately predict certain types of common mistakes that people make when lifting dumbbells. By looking at just a few factors (most importantly, the orientation of the belt sensor, the movement and acceleration of the dumbbell, and the roll of the forearm and arm), it would be possible for this model to give highly accurate feedback to someone who wanted to correct their dumbbell lifting form.</p>
+<p>We now have a model that can, given just a few data points, fairly accurately predict certain types of common mistakes that people make when lifting dumbbells. By looking at just a few factors (most importantly, the orientation of the belt sensor, the movement and acceleration of the dumbbell, and the roll of the forearm and arm), it would be possible for this model to give highly accurate feedback to someone who wanted to correct their dumbbell lifting form. Given more time, it is likely we could have lessened the number of covariates without significantly impacting the accuracy - 12 was chosen arbitrarily. Additional testing would have likely led to an even more streamlined model.</p>
 </div>
 
 

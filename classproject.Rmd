@@ -65,7 +65,7 @@ Next, we'll use our test data and a confusion matrix to see if we were accurate
 confM <- confusionMatrix(predict(finalModel,trainTest),trainTest$classe)
 confM
 ```
-As we have 99% accuracy with high sensitivity and specificity, and an out of sample rate of `r 1-confM$overall[1]` we're going to move forward with this model.
+As we have 99% accuracy with high sensitivity and specificity, and an out of sample rate of ```r 1-confM$overall[1]``` we're going to move forward with this model.
 
 ##Testing
 We can also now run this model on the test data (which were also previously loaded into our working directory, but can be found [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv)- 
@@ -80,3 +80,4 @@ According to the coursera data submission, those predictions were correct.
 
 ##Conclusion
 We now have a model that can, given just a few data points, fairly accurately predict certain types of common mistakes that people make when lifting dumbbells. By looking at just a few factors (most importantly, the orientation of the belt sensor, the movement and acceleration of the dumbbell, and the roll of the forearm and arm), it would be possible for this model to give highly accurate feedback to someone who wanted to correct their dumbbell lifting form.
+Given more time, it is likely we could have lessened the number of covariates without significantly impacting the accuracy - 12 was chosen arbitrarily. Additional testing would have likely led to an even more streamlined model.
