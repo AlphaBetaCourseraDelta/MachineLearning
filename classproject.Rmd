@@ -1,0 +1,82 @@
+---
+title: "You're Doing It Wrong"
+author: "Coursera Student"
+output: html_document
+---
+```{r, echo=FALSE, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(caret)
+library(randomForest)
+```
+##Executive Summary
+These days, personal fitness trackers (PFTs) count our steps when we walk, our eye movements when we sleep, and our reps when we work out. They're invaluable resources for people who want to count how much they move, but could be made even better if they were able to provide feedback on the quality, not just the quantity of movement. For this project, we look closely at data collected to see if we can identify poorly exeuted barbell lifts so that the users of the PFTs will be able to correct their movements.
+
+##Data Cleaning and Processing
+We begin by pulling in training data from our working directory where we loaded them from [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv).  Because we've taken a quick look at it, we know that there are several records with effectively empty data. We'll remove those right away.
+
+```{r}
+projectData <- read.csv("pml-training.csv",na.strings=c("NA","#DIV/0!",""))
+```
+We then take a closer look at the columns.  The first several are for record keeping only and are not predictive, they identify the subjects or the time in which the measurements were taken. We will not use those for our model.  We also notice that there are several columns that are aggregated measurements (e.g., maximums, minimums, averages). Just from a logic level, it doesn't make sense to include those in the model and looking at them more carefully, they're mostly missing values. We can quickly look and check to see how much is missing.
+```{r}
+missingData <- apply(is.na(projectData),2,sum)
+sample(missingData,5)
+```
+We're going to remove the columns with extensive missing data as well.
+```{r}
+missingData <- !as.logical(missingData)
+projectData <- projectData[,missingData]
+projectData <- projectData[,8:60]
+```
+This gives us a set of data that we can use to make predictions
+
+##Analysis
+Next, we're going to split our training data into training and testing data so that we can evaluate our model before testing it with the test data.
+```{r}
+set.seed(8232015)
+trainIndex=createDataPartition(projectData$classe,p=.75, list=FALSE)
+trainTrain <- projectData[trainIndex,]
+trainTest <- projectData[-trainIndex,]
+```
+We'll very quickly fit a random forest predictor and then take a closer look at the 12 most important covariates.
+```{r}
+prelimModel <- randomForest(classe ~ ., data=trainTrain, importance=TRUE)
+prelimImportance <- varImp(prelimModel)
+rownames(prelimImportance) <- colnames(projectData[1:52])
+prelimImportance <- prelimImportance %>%
+  mutate(total=A+B+C+D+E,covar=rownames(prelimImportance)) %>%
+  select(covar,total) %>%
+  arrange(desc(total))
+head(prelimImportance,12)
+```
+And then, we'll use those 12 to build our model.
+```{r cache=TRUE}
+finalModel <- 
+  train(classe~
+          accel_dumbbell_y+accel_dumbbell_z+gyros_arm_y+magnet_dumbbell_y+
+          magnet_dumbbell_z+magnet_forearm_z+pitch_belt+pitch_forearm+
+          roll_belt+roll_dumbbell+roll_forearm+yaw_belt,
+        data=trainTrain,
+        allowParallel=TRUE)
+```
+Next, we'll use our test data and a confusion matrix to see if we were accurate
+```{r}
+confM <- confusionMatrix(predict(finalModel,trainTest),trainTest$classe)
+confM
+```
+As we have 99% accuracy with high sensitivity and specificity, and an out of sample rate of `r 1-confM$overall[1]` we're going to move forward with this model.
+
+##Testing
+We can also now run this model on the test data (which were also previously loaded into our working directory, but can be found [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv)- 
+```{r}
+trueTest <- read.csv("pml-testing.csv",na.strings=c("NA","#DIV/0!",""))
+trueTest <- trueTest[,missingData]
+trueTest <- trueTest[,8:60]
+answers <- predict(finalModel,trueTest)
+answers
+```
+According to the coursera data submission, those predictions were correct.
+
+##Conclusion
+We now have a model that can, given just a few data points, fairly accurately predict certain types of common mistakes that people make when lifting dumbbells. By looking at just a few factors (most importantly, the orientation of the belt sensor, the movement and acceleration of the dumbbell, and the roll of the forearm and arm), it would be possible for this model to give highly accurate feedback to someone who wanted to correct their dumbbell lifting form.
